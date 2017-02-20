@@ -1,4 +1,6 @@
 *.jar
 *.pyc
 *.egg-info
+*.tiff
 json
+catalog
