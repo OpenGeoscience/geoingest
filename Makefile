@@ -78,3 +78,8 @@ ${S3_URI}/geotrellis-spark-etl-assembly-1.0.0-SNAPSHOT.jar,\
 
 proxy:
 	aws emr socks --cluster-id ${CLUSTER_ID} --key-pair-file "${HOME}/${EC2_KEY}.pem"
+
+terminate-cluster:
+	aws emr terminate-clusters --cluster-ids ${CLUSTER_ID}
+	rm -f cluster-id.txt
+	rm -f last-step-id.txt
