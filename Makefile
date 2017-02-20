@@ -7,6 +7,9 @@ MASTER_INSTANCE := m3.xlarge
 WORKER_INSTANCE := m3.2xlarge
 WORKER_COUNT := 4
 
+ifndef CLUSTER_ID
+CLUSTER_ID=$(shell if [ -e "cluster-id.txt" ]; then cat cluster-id.txt; fi)
+endif
 
 get-ingest-jar:
 	rm -rf $(PWD)/jar
@@ -44,3 +47,6 @@ Name=BootstrapGeoWave,Path=${S3_URI}/bootstrap-geowave.sh \
 Name=BootstrapDemo,Path=${S3_URI}/bootstrap-demo.sh,\
 Args=[--tsj=${S3_URI}/server-assembly-0.1.0.jar,--site=${S3_URI}/site.tgz,--s3u=${S3_URI},--backend=${BACKEND}] \
 | tee cluster-id.txt
+
+ssh:
+	aws emr ssh --cluster-id ${CLUSTER_ID} --key-pair-file "${HOME}/${EC2_KEY}.pem"
