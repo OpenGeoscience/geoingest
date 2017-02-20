@@ -22,7 +22,7 @@ def createInputFile(data, dataFormat):
         ingestFormat = "geotiff"
 
     if os.path.isdir(data):
-        name = data
+        name = os.path.basename(data)
     elif os.path.isfile(data):
         name = os.path.splitext(os.path.basename(data))[0]
     jsonString = [{
@@ -64,9 +64,6 @@ def createBackendProfiles():
     jsonFile = writeJsonFile('json/backend-profiles.json',
                              {'backend-profiles': []})
     return jsonFile
-
-def submitIngest():
-    os.system("spark-submit --class geotrellis.spark.etl.TemporalMultibandIngest --master 'local[*]' --driver-memory 10G ../jars/geotrellis-spark-etl-assembly-1.0.0-SNAPSHOT.jar --input input.json --output output.json --backend-profiles backend-profiles.json")
 
 def createJsonFiles(data, dataFormat):
     if not os.path.exists('json'):
