@@ -34,7 +34,7 @@ def createInputFile(data, dataFormat):
             "path": "file://{}".format(data)
         }
     }]
-    jsonFile = writeJsonFile('input.json', jsonString)
+    jsonFile = writeJsonFile('json/input.json', jsonString)
 
 def createOutputFile(dataFormat):
 
@@ -56,33 +56,33 @@ def createOutputFile(dataFormat):
     if "temporal" in dataFormat.lower():
         jsonString['keyIndexMethod']['temporalResolution'] = 86400000
         
-    jsonFile = writeJsonFile('output.json', jsonString)
+    jsonFile = writeJsonFile('json/output.json', jsonString)
 
     return jsonFile
 
 def createBackendProfiles():
-    jsonFile = writeJsonFile('backend-profiles.json',
+    jsonFile = writeJsonFile('json/backend-profiles.json',
                              {'backend-profiles': []})
     return jsonFile
 
 def submitIngest():
     os.system("spark-submit --class geotrellis.spark.etl.TemporalMultibandIngest --master 'local[*]' --driver-memory 10G ../jars/geotrellis-spark-etl-assembly-1.0.0-SNAPSHOT.jar --input input.json --output output.json --backend-profiles backend-profiles.json")
 
-def createJsonFiles():
-    
+def createJsonFiles(data, dataFormat):
+    if not os.path.exists('json'):
+        os.mkdir('json')
     backendProfiles = createBackendProfiles()
     outputJson = createOutputFile(dataFormat)
     inputJson = createInputFile(data, dataFormat)
 
 @click.command()
 @click.argument('data', nargs=1,
-                type=click.Path(exists=True, resolve_path=True),
-                help="Folder of geotiffs or a single geotiff")
-@click.argument('dataFormat', nargs=1,
-                help="One of these: SinglebandIngest, TemporalSinglebandIngest, MultibandIngest, TemporalMultibandingest")
+                type=click.Path(exists=True, resolve_path=True))
+@click.argument('data_format', nargs=1)
 
-def main(data, dataFormat):
-    """Main function to write necessary json specs"""
+def main(data, data_format):
+    """ DATA: Input geotiff or folder of geotiffs \n
+    DATA_FORMAT: One of these: SinglebandIngest, TemporalSinglebandIngest, MultibandIngest, TemporalMultibandingest"""
 
-    createJsonFiles(data, dataFormat)
+    createJsonFiles(data, data_format)
     
