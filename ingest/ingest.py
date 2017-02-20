@@ -15,7 +15,7 @@ def writeJsonFile(jsonFile, jsonString):
 
     return jsonFile
 
-def createInputFile(data, dataFormat):
+def createInputFile(data, dataFormat, ingestType):
     """Creates the input json spec"""
     
     if "temporal" in dataFormat.lower():
@@ -27,14 +27,22 @@ def createInputFile(data, dataFormat):
         name = os.path.basename(data)
     elif os.path.isfile(data):
         name = os.path.splitext(os.path.basename(data))[0]
+
+    if ingestType == "local":
+        backend = {
+            "type": "hadoop",
+            "path": "file://{}".format(data)
+        }
+    elif ingestType == "remote":
+        backend = {
+            "type": "s3",
+            "path": "s3://kitware-geotrellis-demo/data"
+        }
     jsonString = [{
         "format": ingestFormat,
         "name": name,
         "cache": "NONE",
-        "backend": {
-            "type": "hadoop",
-            "path": "file://{}".format(data)
-        }
+        "backend": backend
     }]
     jsonFile = writeJsonFile('json/input.json', jsonString)
 
@@ -90,7 +98,7 @@ def createJsonFiles(data, dataFormat, ingestType):
         os.mkdir('json')
     backendProfiles = createBackendProfiles()
     outputJson = createOutputFile(dataFormat, ingestType)
-    inputJson = createInputFile(data, dataFormat)
+    inputJson = createInputFile(data, dataFormat, ingestType)
 
 @click.command()
 @click.argument('data', nargs=1,
