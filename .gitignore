@@ -2,5 +2,7 @@
 *.pyc
 *.egg-info
 *.tiff
+*.txt
 json
 catalog
+
