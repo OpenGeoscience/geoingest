@@ -7,6 +7,13 @@ MASTER_INSTANCE := m3.xlarge
 WORKER_INSTANCE := m3.2xlarge
 WORKER_COUNT := 4
 
+DRIVER_MEMORY := 4200M
+DRIVER_CORES := 2
+EXECUTOR_MEMORY := 4200M
+EXECUTOR_CORES := 2
+YARN_OVERHEAD := 700
+
+
 ifndef CLUSTER_ID
 CLUSTER_ID=$(shell if [ -e "cluster-id.txt" ]; then cat cluster-id.txt; fi)
 endif
@@ -50,3 +57,24 @@ Args=[--tsj=${S3_URI}/server-assembly-0.1.0.jar,--site=${S3_URI}/site.tgz,--s3u=
 
 ssh:
 	aws emr ssh --cluster-id ${CLUSTER_ID} --key-pair-file "${HOME}/${EC2_KEY}.pem"
+
+submit-remote-ingest:
+	aws emr add-steps --output text --cluster-id ${CLUSTER_ID} \
+--steps Type=CUSTOM_JAR,Name=Ingest,Jar=command-runner.jar,Args=[\
+spark-submit,--master,yarn-cluster,\
+--class,geotrellis.spark.etl.TemporalMultibandIngest,\
+--driver-memory,${DRIVER_MEMORY},\
+--driver-cores,${DRIVER_CORES},\
+--executor-memory,${EXECUTOR_MEMORY},\
+--executor-cores,${EXECUTOR_CORES},\
+--conf,spark.dynamicAllocation.enabled=true,\
+--conf,spark.yarn.executor.memoryOverhead=${YARN_OVERHEAD},\
+--conf,spark.yarn.driver.memoryOverhead=${YARN_OVERHEAD},\
+${S3_URI}/geotrellis-spark-etl-assembly-1.0.0-SNAPSHOT.jar,\
+--input,${S3_URI}/input.json,\
+--output,${S3_URI}/output.json,\
+--backend-profiles,${S3_URI}/backend-profiles.json\
+] | cut -f2 | tee last-step-id.txt
+
+proxy:
+	aws emr socks --cluster-id ${CLUSTER_ID} --key-pair-file "${HOME}/${EC2_KEY}.pem"
