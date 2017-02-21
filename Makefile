@@ -2,6 +2,7 @@ S3_URI := s3://kitware-geotrellis-demo
 SUBNET_ID := subnet-9ce499eb
 EC2_KEY := doruk-NEX
 SECURITY_GROUP := sg-4c811928
+BACKEND := accumulo
 
 MASTER_INSTANCE := m3.xlarge
 WORKER_INSTANCE := m3.2xlarge
