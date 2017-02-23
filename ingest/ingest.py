@@ -36,7 +36,7 @@ def createInputFile(data, dataFormat, ingestType):
     elif ingestType == "remote":
         backend = {
             "type": "s3",
-            "path": "s3://kitware-geotrellis-demo/data"
+            "path": "s3://kitware-geotrellis-demo/test"
         }
     jsonString = [{
         "format": ingestFormat,
@@ -55,9 +55,8 @@ def createOutputFile(dataFormat, ingestType):
         }
     elif ingestType == "remote":
         backend = {
-            "type": "accumulo",
-            "path": "tiles",
-            "profile": "accumulo-emr"
+            "type": "s3",
+            "path": "s3://kitware-geotrellis-demo/catalog"
         }
     jsonString = {
         "reprojectMethod": "buffered",

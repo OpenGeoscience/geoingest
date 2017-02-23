@@ -8,11 +8,11 @@ MASTER_INSTANCE := m3.xlarge
 WORKER_INSTANCE := m3.2xlarge
 WORKER_COUNT := 4
 
-DRIVER_MEMORY := 4200M
-DRIVER_CORES := 2
-EXECUTOR_MEMORY := 4200M
-EXECUTOR_CORES := 2
-YARN_OVERHEAD := 700
+DRIVER_MEMORY := 12000M
+DRIVER_CORES := 4
+EXECUTOR_MEMORY := 12000M
+EXECUTOR_CORES := 4
+YARN_OVERHEAD := 1400
 
 
 ifndef CLUSTER_ID
@@ -25,13 +25,13 @@ get-ingest-jar:
 	wget https://s3-us-west-2.amazonaws.com/kitware-geotrellis-demo/geotrellis-spark-etl-assembly-1.0.0-SNAPSHOT.jar -O $(PWD)/jar/geotrellis-spark-etl-assembly-1.0.0-SNAPSHOT.jar
 
 create-json-specs:
-	ingest $(PWD)/data TemporalMultibandIngest local
+	ingest $(PWD)/data SinglebandIngest local
 
 create-remote-json-specs:
-	ingest $(PWD)/data TemporalMultibandIngest remote
+	ingest $(PWD)/data SinglebandIngest remote
 
 submit-ingest:
-	spark-submit --class geotrellis.spark.etl.TemporalMultibandIngest --master 'local[*]' --driver-memory 10G $(PWD)/jar/geotrellis-spark-etl-assembly-1.0.0-SNAPSHOT.jar --input $(PWD)/json/input.json --output $(PWD)/json/output.json --backend-profiles $(PWD)/json/backend-profiles.json
+	spark-submit --class geotrellis.spark.etl.SinglebandIngest --master 'local[*]' --driver-memory 10G $(PWD)/jar/geotrellis-spark-etl-assembly-1.0.0-SNAPSHOT.jar --input $(PWD)/json/input.json --output $(PWD)/json/output.json --backend-profiles $(PWD)/json/backend-profiles.json
 
 copy-json-specs:
 	@aws s3 cp json/backend-profiles.json ${S3_URI}/
@@ -63,7 +63,7 @@ submit-remote-ingest:
 	aws emr add-steps --output text --cluster-id ${CLUSTER_ID} \
 --steps Type=CUSTOM_JAR,Name=Ingest,Jar=command-runner.jar,Args=[\
 spark-submit,--master,yarn-cluster,\
---class,geotrellis.spark.etl.TemporalMultibandIngest,\
+--class,geotrellis.spark.etl.SinglebandIngest,\
 --driver-memory,${DRIVER_MEMORY},\
 --driver-cores,${DRIVER_CORES},\
 --executor-memory,${EXECUTOR_MEMORY},\
