@@ -6,13 +6,13 @@ BACKEND := accumulo
 
 MASTER_INSTANCE := m4.2xlarge
 WORKER_INSTANCE := m4.2xlarge
-WORKER_COUNT := 50
+WORKER_COUNT := 8
 
-DRIVER_MEMORY := 30000M
+DRIVER_MEMORY := 20000M
 DRIVER_CORES := 8
-EXECUTOR_MEMORY := 30000M
+EXECUTOR_MEMORY := 20000M
 EXECUTOR_CORES := 8
-YARN_OVERHEAD := 4000
+YARN_OVERHEAD := 2048
 
 
 ifndef CLUSTER_ID
@@ -90,6 +90,7 @@ spark-submit,--master yarn-cluster,\
 --conf,spark.yarn.driver.memoryOverhead=${YARN_OVERHEAD},\
 ${S3_URI}/tile-server.jar,s3,kitware-weld-etl,catalog\
 ]
+
 proxy:
 	aws emr socks --cluster-id ${CLUSTER_ID} --key-pair-file "${HOME}/${EC2_KEY}.pem"
 
