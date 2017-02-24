@@ -6,3 +6,5 @@
 json
 catalog
 server/target
+*.class
+*.cache
