@@ -77,6 +77,19 @@ ${S3_URI}/geotrellis-spark-etl-assembly-1.0.0-SNAPSHOT.jar,\
 --backend-profiles,${S3_URI}/backend-profiles.json\
 ] | cut -f2 | tee last-step-id.txt
 
+start-remote-tile-server:
+	aws emr add-steps --output text --cluster-id ${CLUSTER_ID} \
+--steps Type=CUSTOM_JAR,Name=Start-Tile-Server,Jar=command-runner.jar,Args=[\
+spark-submit,--master yarn-cluster,\
+--driver-memory,5G,\
+--driver-cores,4,\
+--executor-cores,2,\
+--executor-memory,5G,\
+--conf,spark.dynamicAllocation.enabled=true,\
+--conf,spark.yarn.executor.memoryOverhead=${YARN_OVERHEAD},\
+--conf,spark.yarn.driver.memoryOverhead=${YARN_OVERHEAD},\
+${S3_URI}/tile-server.jar,s3,kitware-weld-etl,catalog\
+]
 proxy:
 	aws emr socks --cluster-id ${CLUSTER_ID} --key-pair-file "${HOME}/${EC2_KEY}.pem"
 
