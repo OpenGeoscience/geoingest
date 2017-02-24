@@ -67,6 +67,7 @@ def createOutputFile(dataFormat, ingestType):
         },
         "resampleMethod": "cubic-spline",
         "layoutScheme": "zoomed",
+        "maxZoom": 13,
         "crs": "EPSG:3857"
     }
     jsonString['backend'] = backend
