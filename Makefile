@@ -80,7 +80,7 @@ ${S3_URI}/geotrellis-spark-etl-assembly-1.0.0-SNAPSHOT.jar,\
 start-remote-tile-server:
 	aws emr add-steps --output text --cluster-id ${CLUSTER_ID} \
 --steps Type=CUSTOM_JAR,Name=Start-Tile-Server,Jar=command-runner.jar,Args=[\
-spark-submit,--master yarn-cluster,\
+spark-submit,--master,yarn-cluster,\
 --driver-memory,5G,\
 --driver-cores,4,\
 --executor-cores,2,\
