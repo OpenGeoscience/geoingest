@@ -1,0 +1,3 @@
+[submodule "geotrellis"]
+	path = geotrellis
+	url = https://github.com/locationtech/geotrellis.git
