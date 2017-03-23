@@ -1,9 +1,9 @@
 import glob
 import json
 import os
+import itertools
 
 import click
-
 
 def writeJsonFile(jsonFile, jsonString):
     """Writes a json string to a json file"""
@@ -15,101 +15,47 @@ def writeJsonFile(jsonFile, jsonString):
 
     return jsonFile
 
-def createInputFile(data, dataFormat, ingestType):
-    """Creates the input json spec"""
-    
-    if "temporal" in dataFormat.lower():
-        ingestFormat = "temporal-geotiff"
-    else:
-        ingestFormat = "geotiff"
+def generateTemplate(layerName):
 
-    if os.path.isdir(data):
-        name = os.path.basename(data)
-    elif os.path.isfile(data):
-        name = os.path.splitext(os.path.basename(data))[0]
+    fileName = layerName.strip()
+    layerName = os.path.splitext(fileName)[0]
+    s3Layer = "s3://kitware-weld-etl-test/{}".format(fileName)
 
-    if ingestType == "local":
-        backend = {
-            "type": "hadoop",
-            "path": "file://{}".format(data)
-        }
-    elif ingestType == "remote":
-        backend = {
-            "type": "s3",
-            "path": "s3://kitware-geotrellis-demo/test"
-        }
-    jsonString = [{
-        "format": ingestFormat,
-        "name": name,
+    return {
+        "format": "geotiff",
+        "name": layerName,
         "cache": "NONE",
-        "backend": backend
-    }]
-    jsonFile = writeJsonFile('json/input.json', jsonString)
-
-def createOutputFile(dataFormat, ingestType):
-
-    if ingestType == "local":
-        backend = {
-            "type": "file",
-            "path": "catalog"
-        }
-    elif ingestType == "remote":
-        backend = {
+        "backend": {
             "type": "s3",
-            "path": "s3://kitware-geotrellis-demo/catalog"
+            "path": s3Layer
         }
-    jsonString = {
-        "reprojectMethod": "buffered",
-        "pyramid": True,
-        "tileSize": 256,
-        "keyIndexMethod": {
-            "type": "zorder"
-        },
-        "resampleMethod": "cubic-spline",
-        "layoutScheme": "zoomed",
-        "maxZoom": 13,
-        "crs": "EPSG:3857"
     }
-    jsonString['backend'] = backend
-    if "temporal" in dataFormat.lower():
-        jsonString['keyIndexMethod']['temporalResolution'] = 86400000
-        
-    jsonFile = writeJsonFile('json/output.json', jsonString)
 
-def createBackendProfiles():
+    
+def generateInputJson(layerList):
+    """Generates the json input file for a given list"""
 
-    jsonString = {
-        "backend-profiles": [
-            {
-                "name": "accumulo-emr",
-                "type": "accumulo",
-                "zookeepers": "",
-                "instance": "accumulo",
-                "user": "root",
-                "password": "secret"
-            }
-        ]
-    }
-    jsonFile = writeJsonFile('json/backend-profiles.json',
-                             jsonString)
+    jsonString = [generateTemplate(i) for i in layerList]
+    writeJsonFile("json/input.json", jsonString)
+    
+def createInputFile(start, end):
+    """Creates the input json spec"""
+    start = int(start)
+    end = int(end)
 
-def createJsonFiles(data, dataFormat, ingestType):
-    if not os.path.exists('json'):
-        os.mkdir('json')
-    backendProfiles = createBackendProfiles()
-    outputJson = createOutputFile(dataFormat, ingestType)
-    inputJson = createInputFile(data, dataFormat, ingestType)
+    with open('missing.out') as f:
+        lines = f.readlines()
 
+    generateInputJson(lines[start:end])
+
+    
+    
 @click.command()
-@click.argument('data', nargs=1,
-                type=click.Path(exists=True, resolve_path=True))
-@click.argument('data_format', nargs=1)
-@click.argument('ingest_type', nargs=1)
+@click.argument('start', nargs=1)
+@click.argument('end', nargs=1)
 
-def main(data, data_format, ingest_type):
-    """ DATA: Input geotiff or folder of geotiffs \n
-    DATA_FORMAT: One of these: SinglebandIngest, TemporalSinglebandIngest, MultibandIngest, TemporalMultibandingest \n
-    INGEST_TYPE: One of these: local, remote"""
+def main(start, end):
+    """ DATA: Input geotiff or folder of geotiffs """
 
-    createJsonFiles(data, data_format, ingest_type)
+    createInputFile(start, end)
     

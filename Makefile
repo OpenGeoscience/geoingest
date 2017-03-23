@@ -1,28 +1,22 @@
-S3_URI := s3://kitware-geotrellis-demo
-SUBNET_ID := subnet-9ce499eb
-EC2_KEY := doruk-NEX
-SECURITY_GROUP := sg-4c811928
+S3_URI := s3whichwillhavejars
+SUBNET_ID := subnetid
+EC2_KEY := ec2key
+SECURITY_GROUP := securityid
 BACKEND := accumulo
-
-MASTER_INSTANCE := m4.2xlarge
+MASTER_INSTANCE := m4.xlarge
 WORKER_INSTANCE := m4.2xlarge
-WORKER_COUNT := 8
+WORKER_COUNT := 6
 
-DRIVER_MEMORY := 20000M
-DRIVER_CORES := 8
-EXECUTOR_MEMORY := 20000M
-EXECUTOR_CORES := 8
-YARN_OVERHEAD := 2048
+DRIVER_MEMORY := 4200M
+DRIVER_CORES := 2
+EXECUTOR_MEMORY := 4200M
+EXECUTOR_CORES := 2
+YARN_OVERHEAD := 700
 
 
 ifndef CLUSTER_ID
 CLUSTER_ID=$(shell if [ -e "cluster-id.txt" ]; then cat cluster-id.txt; fi)
 endif
-
-get-ingest-jar:
-	rm -rf $(PWD)/jar
-	mkdir $(PWD)/jar
-	wget https://s3-us-west-2.amazonaws.com/kitware-geotrellis-demo/geotrellis-spark-etl-assembly-1.0.0-SNAPSHOT.jar -O $(PWD)/jar/geotrellis-spark-etl-assembly-1.0.0-SNAPSHOT.jar
 
 create-json-specs:
 	ingest $(PWD)/data SinglebandIngest local
@@ -48,8 +42,8 @@ create-cluster:
 --ec2-attributes KeyName=${EC2_KEY},SubnetId=${SUBNET_ID},EmrManagedMasterSecurityGroup=${SECURITY_GROUP},EmrManagedSlaveSecurityGroup=${SECURITY_GROUP} \
 --applications Name=Ganglia Name=Hadoop Name=Hue Name=Spark Name=Zeppelin \
 --instance-groups \
-'Name=Master,InstanceCount=1,InstanceGroupType=MASTER,InstanceType=${MASTER_INSTANCE},EbsConfiguration={EbsOptimized=true,EbsBlockDeviceConfigs=[{VolumeSpecification={VolumeType=gp2,SizeInGB=50},VolumesPerInstance=1}]}' \
-'Name=Workers,InstanceCount=${WORKER_COUNT},InstanceGroupType=CORE,InstanceType=${WORKER_INSTANCE},EbsConfiguration={EbsOptimized=true,EbsBlockDeviceConfigs=[{VolumeSpecification={VolumeType=gp2,SizeInGB=20},VolumesPerInstance=1}]}' \
+'Name=Master,InstanceCount=1,InstanceGroupType=MASTER,InstanceType=${MASTER_INSTANCE},EbsConfiguration={EbsOptimized=true,EbsBlockDeviceConfigs=[{VolumeSpecification={VolumeType=gp2,SizeInGB=250},VolumesPerInstance=1}]}' \
+'Name=Workers,InstanceCount=${WORKER_COUNT},InstanceGroupType=CORE,InstanceType=${WORKER_INSTANCE},EbsConfiguration={EbsOptimized=true,EbsBlockDeviceConfigs=[{VolumeSpecification={VolumeType=gp2,SizeInGB=250},VolumesPerInstance=1}]}' \
 --bootstrap-actions \
 Name=BootstrapGeoWave,Path=${S3_URI}/bootstrap-geowave.sh \
 Name=BootstrapDemo,Path=${S3_URI}/bootstrap-demo.sh,\
@@ -63,19 +57,34 @@ submit-remote-ingest:
 	aws emr add-steps --output text --cluster-id ${CLUSTER_ID} \
 --steps Type=CUSTOM_JAR,Name=Ingest,Jar=command-runner.jar,Args=[\
 spark-submit,--master,yarn-cluster,\
+--verbose,\
 --class,geotrellis.spark.etl.SinglebandIngest,\
 --driver-memory,${DRIVER_MEMORY},\
 --driver-cores,${DRIVER_CORES},\
 --executor-memory,${EXECUTOR_MEMORY},\
 --executor-cores,${EXECUTOR_CORES},\
 --conf,spark.dynamicAllocation.enabled=true,\
+--conf,spark.driver.maxResultSize=4g,\
 --conf,spark.yarn.executor.memoryOverhead=${YARN_OVERHEAD},\
 --conf,spark.yarn.driver.memoryOverhead=${YARN_OVERHEAD},\
 ${S3_URI}/geotrellis-spark-etl-assembly-1.0.0-SNAPSHOT.jar,\
 --input,${S3_URI}/input.json,\
 --output,${S3_URI}/output.json,\
 --backend-profiles,${S3_URI}/backend-profiles.json\
-] | cut -f2 | tee last-step-id.txt
+]
+
+submit-pyramid-complete:
+	aws emr add-steps --output text --cluster-id ${CLUSTER_ID} \
+--steps Type=CUSTOM_JAR,Name=PyramidComplete,Jar=command-runner.jar,Args=[\
+spark-submit,--master,yarn-cluster,\
+--verbose,\
+--class,demo.Main,\
+--conf,spark.default.parallelism=1000,\
+--conf,spark.dynamicAllocation.enabled=true,\
+--conf,spark.yarn.executor.memoryOverhead=${YARN_OVERHEAD},\
+--conf,spark.yarn.driver.memoryOverhead=${YARN_OVERHEAD},\
+${S3_URI}/geotrellis-sbt-template-assembly-0.1.0.jar\
+]
 
 start-remote-tile-server:
 	aws emr add-steps --output text --cluster-id ${CLUSTER_ID} \
