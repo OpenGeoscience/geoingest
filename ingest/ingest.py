@@ -15,15 +15,16 @@ def writeJsonFile(jsonFile, jsonString):
 
 def inputTemplate(s3, layerName):
 
-    return {
+    return [{
         "format": "geotiff",
         "name": layerName,
         "cache": "NONE",
+        "numPartitions": 10000,
         "backend": {
             "type": "s3",
             "path": s3
         }
-    }
+    }]
     
 def backendTemplate():
     return {

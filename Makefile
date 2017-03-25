@@ -1,36 +1,16 @@
-S3_URI := s3whichwillhavejars
-SUBNET_ID := subnetid
-EC2_KEY := ec2key
-SECURITY_GROUP := securityid
-BACKEND := accumulo
-MASTER_INSTANCE := m4.xlarge
-WORKER_INSTANCE := m4.2xlarge
-WORKER_COUNT := 6
-
-DRIVER_MEMORY := 4200M
-DRIVER_CORES := 2
-EXECUTOR_MEMORY := 4200M
-EXECUTOR_CORES := 2
-YARN_OVERHEAD := 700
-
+include aws-credentials.mk
 
 ifndef CLUSTER_ID
 CLUSTER_ID=$(shell if [ -e "cluster-id.txt" ]; then cat cluster-id.txt; fi)
 endif
 
-create-json-specs:
-	ingest $(PWD)/data SinglebandIngest local
-
-create-remote-json-specs:
-	ingest $(PWD)/data SinglebandIngest remote
-
 submit-ingest:
 	spark-submit --class geotrellis.spark.etl.SinglebandIngest --master 'local[*]' --driver-memory 10G $(PWD)/jar/geotrellis-spark-etl-assembly-1.0.0-SNAPSHOT.jar --input $(PWD)/json/input.json --output $(PWD)/json/output.json --backend-profiles $(PWD)/json/backend-profiles.json
 
 copy-json-specs:
-	@aws s3 cp json/backend-profiles.json ${S3_URI}/
-	@aws s3 cp json/input.json ${S3_URI}/
-	@aws s3 cp json/output.json ${S3_URI}/output.json
+	@aws s3 cp backend-profiles.json ${S3_URI}/
+	@aws s3 cp input.json ${S3_URI}/
+	@aws s3 cp output.json ${S3_URI}/
 
 create-cluster:
 	aws emr create-cluster --name Kitware-Geotrellis-Cluster \
@@ -67,7 +47,7 @@ spark-submit,--master,yarn-cluster,\
 --conf,spark.driver.maxResultSize=4g,\
 --conf,spark.yarn.executor.memoryOverhead=${YARN_OVERHEAD},\
 --conf,spark.yarn.driver.memoryOverhead=${YARN_OVERHEAD},\
-${S3_URI}/geotrellis-spark-etl-assembly-1.0.0-SNAPSHOT.jar,\
+${S3_URI}/geotrellis-spark-etl-assembly-1.1.0-SNAPSHOT.jar,\
 --input,${S3_URI}/input.json,\
 --output,${S3_URI}/output.json,\
 --backend-profiles,${S3_URI}/backend-profiles.json\
