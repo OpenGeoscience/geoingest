@@ -34,11 +34,10 @@ trait ReaderSet {
         val SpatialKey(nx, ny) = rmd.mapTransform(centerPoint)
         val sourceExtent = rmd.mapTransform(nx, ny)
 
-
         val largerTile =
           singleBandTileReader.read(layerId, SpatialKey(nx, ny))
 
-        Some(largerTile.resample(sourceExtent, RasterExtent(requestExtent, 256, 256), Bilinear))
+        Some(largerTile.resample(sourceExtent, RasterExtent(requestExtent, 256, 256), NearestNeighbor))
       } else {
         Some(singleBandTileReader.read(LayerId(layer, zoom), SpatialKey(x, y)))
       }
