@@ -10,3 +10,5 @@ server/target
 *.cache
 *.mk
 ingest/target
+project/target
+target
