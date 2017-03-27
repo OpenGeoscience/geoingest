@@ -9,3 +9,4 @@ server/target
 *.class
 *.cache
 *.mk
+ingest/target
