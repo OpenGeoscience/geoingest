@@ -43,10 +43,31 @@ object Render {
       )
     ).withBoundaryType(Exact).withFallbackColor(0x00000000)
 
+  val slopeColorBreaks = ColorRamps.BlueToOrange.toColorMap(0 to 90 by 10 toArray)
+
+  val aspectColorBreaks = ColorMap(
+    Map(
+      0  -> RGB(r = 255, g = 51, b = 51),
+      45  -> RGB(r = 255, g = 153, b = 51),
+      90  -> RGB(r = 255, g = 255, b = 51),
+      135  -> RGB(r = 51, g = 255, b = 51),
+      180  -> RGB(r = 51, g = 255, b = 255),
+      225  -> RGB(r = 51, g = 153, b = 255),
+      270  -> RGB(r = 51, g = 51, b = 255),
+      315  -> RGB(r = 255, g = 51, b = 255)
+    )
+  )
+
+  val hillshadeColorBreaks =
+    ColorMap.fromStringDouble("0:C2FAB3ff;12:D4EA86ff;24:169B28ff;36:639231ff;48:E9B50Dff;60:BE4200ff;72:770701ff;84:6D2308ff;96:7B4928ff;108:A49288ff;128:CCCCCCff").get
+
   def colors(layer: String): ColorMap = layer match {
     case "weld" => ndviColorBreaks
     case "landcover" => nlcdColorBreaks
     case "elevation" => demColorBreaks
+    case "slope" => slopeColorBreaks
+    case "aspect" => aspectColorBreaks
+    case "hillshade" => hillshadeColorBreaks
   }
 
   def render(tile: Tile, layer: String): Png = {

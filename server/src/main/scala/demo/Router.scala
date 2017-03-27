@@ -42,7 +42,11 @@ class Router(readerSet: ReaderSet, sc: SparkContext) extends Directives with Akk
     path("ping") { complete { "pong\n" } } ~
       pathPrefix("tiles") { tilesRoute } ~
       pathPrefix("focalmean") { focalMeanRoute } ~
-      pathPrefix("focalsd") { focalSdRoute }
+      pathPrefix("focalsd") { focalSdRoute } ~
+      pathPrefix("slope") { slopeRoute } ~
+      pathPrefix("aspect") { aspectRoute } ~
+      pathPrefix("hillshade") { hillshadeRoute }
+
 
   /** Find the breaks for one layer */
   def tilesRoute =
@@ -84,6 +88,45 @@ class Router(readerSet: ReaderSet, sc: SparkContext) extends Directives with Akk
           tileOpt.map { tile =>
             val focal = tile.focalStandardDeviation(Square(3))
             val png = Render.render(focal, layer)
+            pngAsHttpResponse(png)
+          }
+        }
+      }
+    }
+  def slopeRoute =
+    pathPrefix(IntNumber/ IntNumber/ IntNumber) { (zoom, x, y) =>
+      complete {
+        Future {
+          val tileOpt = readerSet.readSinglebandTile("elevation", zoom, x, y)
+          tileOpt.map { tile =>
+            val slope = tile.slope(CellSize(90, 90))
+            val png = Render.render(slope, "slope")
+            pngAsHttpResponse(png)
+          }
+        }
+      }
+    }
+  def aspectRoute =
+    pathPrefix(IntNumber/ IntNumber/ IntNumber) { (zoom, x, y) =>
+      complete {
+        Future {
+          val tileOpt = readerSet.readSinglebandTile("elevation", zoom, x, y)
+          tileOpt.map { tile =>
+            val slope = tile.aspect(CellSize(90, 90))
+            val png = Render.render(slope, "aspect")
+            pngAsHttpResponse(png)
+          }
+        }
+      }
+    }
+  def hillshadeRoute =
+    pathPrefix(IntNumber/ IntNumber/ IntNumber) { (zoom, x, y) =>
+      complete {
+        Future {
+          val tileOpt = readerSet.readSinglebandTile("elevation", zoom, x, y)
+          tileOpt.map { tile =>
+            val slope = tile.hillshade(CellSize(90, 90))
+            val png = Render.render(slope, "hillshade")
             pngAsHttpResponse(png)
           }
         }
