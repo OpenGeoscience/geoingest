@@ -45,6 +45,7 @@ spark-submit,--master,yarn-cluster,\
 --executor-cores,${EXECUTOR_CORES},\
 --conf,spark.dynamicAllocation.enabled=true,\
 --conf,spark.driver.maxResultSize=4g,\
+--conf,spark.default.parallelism=20000,\
 --conf,spark.yarn.executor.memoryOverhead=${YARN_OVERHEAD},\
 --conf,spark.yarn.driver.memoryOverhead=${YARN_OVERHEAD},\
 ${S3_URI}/geotrellis-spark-etl-assembly-1.1.0-SNAPSHOT.jar,\

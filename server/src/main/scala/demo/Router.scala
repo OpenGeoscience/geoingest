@@ -14,6 +14,7 @@ import geotrellis.spark._
 import geotrellis.spark.io._
 import geotrellis.spark.tiling._
 import geotrellis.raster.mapalgebra.focal._
+import geotrellis.raster.mapalgebra.local._
 import geotrellis.vector._
 import geotrellis.vector.io._
 import geotrellis.vector.io.json._
@@ -43,7 +44,6 @@ class Router(readerSet: ReaderSet, sc: SparkContext) extends Directives with Akk
       pathPrefix("focalmean") { focalMeanRoute } ~
       pathPrefix("focalsd") { focalSdRoute }
 
-
   /** Find the breaks for one layer */
   def tilesRoute =
   pathPrefix(Segment / IntNumber / IntNumber / IntNumber) { (layer, zoom, x, y) =>
@@ -53,7 +53,7 @@ class Router(readerSet: ReaderSet, sc: SparkContext) extends Directives with Akk
             readerSet.readSinglebandTile(layer, zoom, x, y)
 
           tileOpt.map { tile =>
-            val png = Render.ndvi(tile)
+            val png = Render.render(tile, layer)
             pngAsHttpResponse(png)
           }
         }
@@ -68,7 +68,7 @@ class Router(readerSet: ReaderSet, sc: SparkContext) extends Directives with Akk
 
           tileOpt.map { tile =>
             val focal = tile.focalMean(Square(3))
-            val png = Render.ndvi(focal)
+            val png = Render.render(focal, layer)
             pngAsHttpResponse(png)
           }
         }
@@ -83,10 +83,11 @@ class Router(readerSet: ReaderSet, sc: SparkContext) extends Directives with Akk
 
           tileOpt.map { tile =>
             val focal = tile.focalStandardDeviation(Square(3))
-            val png = Render.ndvi(focal)
+            val png = Render.render(focal, layer)
             pngAsHttpResponse(png)
           }
         }
       }
     }
+
 }

@@ -19,7 +19,7 @@ def inputTemplate(s3, layerName):
         "format": "geotiff",
         "name": layerName,
         "cache": "NONE",
-        "numPartitions": 10000,
+        "numPartitions": 20000,
         "backend": {
             "type": "s3",
             "path": s3
