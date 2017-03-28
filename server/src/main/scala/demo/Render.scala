@@ -63,7 +63,9 @@ object Render {
 
   def colors(layer: String): ColorMap = layer match {
     case "weld" => ndviColorBreaks
+    case "weld11" => ndviColorBreaks
     case "landcover" => nlcdColorBreaks
+    case "landcover2" => nlcdColorBreaks
     case "elevation" => demColorBreaks
     case "slope" => slopeColorBreaks
     case "aspect" => aspectColorBreaks
